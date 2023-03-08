@@ -9,7 +9,7 @@ tar -zxvf mnli.tar.gz
 rm -rf mnli.tar.gz
 
 rm -rf agnews
-wget --content-disposition https://cloud.tsinghua.edu.cn/f/0fb6af2a1e6647b79098/?dl=1
+wget --content-disposition https://cloud.tsinghua.edu.cn/f/0fb6af2a1e6647b79098/?dl=1 --no-check-certificate
 tar -zxvf agnews.tar.gz
 rm -rf agnews.tar.gz
 

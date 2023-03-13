@@ -277,9 +277,22 @@ class PromptForClassification(nn.Module):
 
         """
         outputs = outputs[torch.where(batch['loss_ids']>0)]
+
         outputs = outputs.view(batch['loss_ids'].shape[0], -1, outputs.shape[1])
         if outputs.shape[1] == 1:
             outputs = outputs.view(outputs.shape[0], outputs.shape[2])
+        return outputs
+    def get_sentence_embedding(self,hidden,batch):
+        outputs=[]
+        for i in range(len(hidden)):
+            temp=hidden[i]
+            b=batch["attention_mask"][i]
+            temp=temp[torch.where(b>2)]
+            temp=torch.mean(temp,dim=0)
+            outputs.append(temp)
+        # sentence_embedding = hidden[:,0]
+        # any_embedding=hidden[:,9]
+        outputs=torch.stack(outputs)
         return outputs
 
     def forward(self, batch: Union[Dict, InputFeatures]) -> torch.Tensor:
@@ -298,6 +311,13 @@ class PromptForClassification(nn.Module):
             outputs_at_mask = [self.extract_at_mask(output, batch) for output in outputs]
         else:
             outputs_at_mask = self.extract_at_mask(outputs, batch)
+        # ---------------分割线---------------
+        sentence_embedding = self.get_sentence_embedding(outputs[0],batch)
+        temp=outputs_at_mask
+        outputs_at_mask=[]
+        outputs_at_mask.append(torch.cat([temp[0],sentence_embedding],1))
+        outputs_at_mask.append(temp[1])
+        #------------------------------------
         label_words_logits = self.verbalizer.process_outputs(outputs_at_mask, batch=batch)
         return label_words_logits
 

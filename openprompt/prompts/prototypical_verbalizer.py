@@ -58,7 +58,7 @@ class ProtoVerbalizer(Verbalizer):
         self.epochs = epochs
         self.trained = False
 
-        self.hidden_dims = model.config.hidden_size
+        self.hidden_dims = model.config.hidden_size*2
 
         self.head = torch.nn.Linear(self.hidden_dims, self.mid_dim, bias=False)
 
@@ -321,16 +321,19 @@ class ProtoVerbalizer(Verbalizer):
 
         return loss
 
-    def get_sentence_embedding(self,hidden,batch):
-        outputs=[]
-        for i in range(len(hidden)):
-            temp=hidden[i]
-            b=batch["attention_mask"][i]
-            temp=temp[torch.where(b>0)]
-            temp=torch.mean(temp,dim=0)
-            outputs.append(temp)
-        outputs=torch.stack(outputs)
-        return outputs
+    # def get_sentence_embedding(self,hidden,batch):
+    #     outputs=[]
+    #     for i in range(len(hidden)):
+    #         temp=hidden[i]
+    #         b=batch["attention_mask"][i]
+    #         temp=temp[torch.where(b>0)]
+    #         temp=torch.mean(temp,dim=0)
+    #         outputs.append(temp)
+    #     # sentence_embedding = hidden[:,0]
+    #     # any_embedding=hidden[:,9]
+    #     outputs=torch.stack(outputs)
+    #     return outputs
+
     def train_proto(self, model, dataloader, device):
         model.eval()
         embeds = [[] for _ in range(self.num_classes)]
@@ -341,10 +344,10 @@ class ProtoVerbalizer(Verbalizer):
                 hidden, _ = self.gather_outputs(outputs)
                 outputs_at_mask = model.extract_at_mask(hidden, batch)
                 # ----分割线----
-                sentence_embedding=self.get_sentence_embedding(hidden,batch)
+                sentence_embedding,bert_sentence_embedding,any_embedding=model.get_sentence_embedding(hidden,batch)
                 # outputs_at_mask = sentence_embedding
-                outputs_at_mask=(outputs_at_mask+sentence_embedding)/2
-                # outputs_at_mask=torch.cat([outputs_at_mask,sentence_embedding],dim=1)
+                # outputs_at_mask=(outputs_at_mask+sentence_embedding)/2
+                outputs_at_mask = torch.cat([outputs_at_mask, sentence_embedding], dim=1)
                 # ----
                 for j in range(len(outputs_at_mask)):
                     label = batch['label'][j]

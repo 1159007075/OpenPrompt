@@ -266,7 +266,11 @@ class ProtoVerbalizer(Verbalizer):
         if self.trained is False:
             return manual_logits
 
+        temp=torch.cat([outputs[0], outputs[0]], dim=1)
         proto_logits = self.process_hiddens(outputs[0])
+        #---分割线---
+        # sentence_embedding=self.get_sentence_embedding(outputs[0],batch)
+        # ---分割线---
         if self.trained and self.multi_verb == "proto":
             return proto_logits
 
@@ -338,7 +342,9 @@ class ProtoVerbalizer(Verbalizer):
                 outputs_at_mask = model.extract_at_mask(hidden, batch)
                 # ----分割线----
                 sentence_embedding=self.get_sentence_embedding(hidden,batch)
+                # outputs_at_mask = sentence_embedding
                 outputs_at_mask=(outputs_at_mask+sentence_embedding)/2
+                # outputs_at_mask=torch.cat([outputs_at_mask,sentence_embedding],dim=1)
                 # ----
                 for j in range(len(outputs_at_mask)):
                     label = batch['label'][j]
